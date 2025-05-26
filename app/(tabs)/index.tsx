@@ -1,75 +1,82 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import NormalMovieCards from "@/components/Cards/NormalMovieCard";
+import PopularMovies from "@/components/HomePageComponents/PopularMovies";
+import SearchBar from "@/components/SearchBar";
+import { icons } from "@/constants/icons";
+import { images } from "@/constants/images";
+import useFetch from "@/hooks/useFetch";
+import { getLatestMovies } from "@/services/api";
+import { useRouter } from "expo-router";
+import { FlatList, Image, Text, View } from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { memo } from "react";
 
-export default function HomeScreen() {
+const MovieHeader = memo(() => {
+  const router = useRouter();
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View>
+      <Image source={icons.logo} className="w-12 mx-auto mt-20 mb-5 h-10" />
+      <View className="flex-1 mt-5">
+        <SearchBar
+          onPress={() => router.push("/search")}
+          placeholder="Search"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+      <PopularMovies />
+      <View className="mt-[50px]">
+        <Text className="mb-[14px] text-4xl font-bold text-white ml-[20px]">
+          Latest movies
+        </Text>
+      </View>
+    </View>
+  );
+});
+
+export default function MoviePage() {
+  const { data: latest, loading } = useFetch({
+    fetchFunction: () => getLatestMovies(1),
+    autoFetch: true,
+  });
+
+  const { data: popularMovies } = useFetch({
+    fetchFunction: () => getLatestMovies(1),
+    autoFetch: true,
+  });
+  return (
+    <View className="items-center justify-center flex-1 bg-primary">
+      <Image source={images.bg} className="w-full absolute z-0 top-0" />
+      <FlatList
+        className="w-full h-full"
+        ListHeaderComponent={MovieHeader}
+        columnWrapperStyle={{
+          justifyContent: "flex-start",
+          gap: 16,
+          marginBottom: 20,
+          paddingHorizontal: 20,
+        }}
+        contentContainerClassName="pb-[100px]"
+        showsVerticalScrollIndicator={false}
+        data={latest}
+        numColumns={3}
+        renderItem={({ item }) => (
+          <NormalMovieCards
+            key={item?.id}
+            id={item?.id}
+            imageUrl={`https://image.tmdb.org/t/p/w500${item?.poster_path}`}
+            title={item?.title}
+            genres={"Action, Drama"}
+            vote_average={item?.vote_average}
+            duration="2h 30m"
+          />
+        )}
+        keyExtractor={(item) => item.id.toString()}
+        ListEmptyComponent={() => (
+          <View className="flex items-center justify-center w-full p-4">
+            <Text className="text-white text-lg">
+              {loading ? "Loading movies..." : "No movies found"}
+            </Text>
+          </View>
+        )}
+      />
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
